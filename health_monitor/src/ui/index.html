@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>生命体征监测</title>
+  <link rel="stylesheet" href="./styles.css?v=20260701-yolo-fit-contain-2" />
+</head>
+<body>
+  <main class="qt-shell">
+    <aside class="sidebar">
+      <div class="logo"><img src="./health_logo.png" alt="健康监测" /></div>
+      <nav class="nav" aria-label="页面切换">
+        <button class="nav-item active" type="button" data-target="realtime"><span>▱</span>实时监测</button>
+        <button class="nav-item" type="button" data-target="history"><span>◷</span>历史摘要</button>
+        <button class="nav-item" type="button" data-target="bedside"><span>▣</span>床旁影像</button>
+        <button class="nav-item" type="button" data-target="yolo"><span>◎</span>YOLO检测</button>
+        <button class="nav-item" type="button" data-target="device"><span>⚙</span>设备调试</button>
+      </nav>
+      <div class="collapse">≪&nbsp;&nbsp;收起</div>
+    </aside>
+
+    <section class="workspace">
+      <header class="titlebar">
+        <h1>生命体征监测</h1>
+        <span class="title-clock" id="currentTime">--</span>
+        <div class="window-buttons" aria-hidden="true">
+          <span>-</span>
+          <span>□</span>
+          <span>×</span>
+        </div>
+      </header>
+
+      <section class="screen active" id="realtime" aria-label="实时监测">
+        <div class="content realtime-grid">
+          <article class="metric-card heart">
+            <div class="round-icon">♥</div>
+            <div class="metric-copy">
+              <h2>心率</h2>
+              <div class="metric-value"><strong id="hrValue">81</strong><span>bpm</span></div>
+              <div class="metric-foot"><span id="hrTag">●&nbsp;&nbsp;正常</span><b>60~100</b></div>
+            </div>
+          </article>
+
+          <article class="metric-card breath">
+            <div class="round-icon">肺</div>
+            <div class="metric-copy">
+              <h2>呼吸</h2>
+              <div class="metric-value"><strong id="brValue">17</strong><span>rpm</span></div>
+              <div class="metric-foot"><span id="brTag">●&nbsp;&nbsp;正常</span><b>12~20</b></div>
+            </div>
+          </article>
+
+          <article class="metric-card bed">
+            <div class="round-icon">眠</div>
+            <div class="metric-copy">
+              <h2 class="sleep-only-title">睡眠阶段</h2>
+            </div>
+          </article>
+
+          <article class="wave-card">
+            <div class="wave-block">
+              <div class="wave-head">
+                <span class="wave-title green">心率波形</span>
+                <span class="gain">增益：20dB</span>
+                <span class="readout green" id="heartReadout">HR:&nbsp;&nbsp;81 bpm</span>
+              </div>
+              <canvas id="heartWave"></canvas>
+            </div>
+            <div class="wave-block">
+              <div class="wave-head">
+                <span class="wave-title pink">呼吸波形</span>
+                <span class="gain">增益：20dB</span>
+                <span class="readout pink" id="breathReadout">RR:&nbsp;&nbsp;17 rpm</span>
+              </div>
+              <canvas id="breathWave"></canvas>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <section class="screen" id="history" aria-label="历史摘要">
+        <div class="content history-grid">
+          <article class="metric-card heart">
+            <div class="round-icon">♥</div>
+            <div class="metric-copy">
+              <h2>平均心率</h2>
+              <div class="metric-value"><strong>68</strong><span>bpm</span></div>
+              <div class="metric-foot"><span>较前一晚 ↓3</span></div>
+            </div>
+          </article>
+          <article class="metric-card breath">
+            <div class="round-icon">肺</div>
+            <div class="metric-copy">
+              <h2>平均呼吸</h2>
+              <div class="metric-value"><strong>15</strong><span>rpm</span></div>
+              <div class="metric-foot"><span>较前一晚 ↓1</span></div>
+            </div>
+          </article>
+          <article class="metric-card bed">
+            <div class="round-icon">时</div>
+            <div class="metric-copy">
+              <h2>有效监测时长</h2>
+              <div class="metric-value bed-value"><strong>8小时32分</strong></div>
+              <div class="metric-foot"><span>较前一晚 +22分</span></div>
+            </div>
+          </article>
+          <article class="metric-card event">
+            <div class="round-icon">!</div>
+            <div class="metric-copy">
+              <h2>异常事件</h2>
+              <div class="metric-value"><strong>2</strong><span>次</span></div>
+              <div class="metric-foot"><span>较前一晚 ↓3</span></div>
+            </div>
+          </article>
+
+          <article class="chart-card trend-card">
+            <div class="card-head">
+              <h2>7天生命体征趋势</h2>
+              <button type="button">7天</button>
+            </div>
+            <div class="legend"><span class="blue">━ 心率 bpm</span><span class="pink">━ 呼吸 rpm</span></div>
+            <canvas id="heartTrend"></canvas>
+            <canvas id="breathTrend"></canvas>
+          </article>
+
+          <article class="chart-card sleep-card">
+            <h2>睡眠时间线&nbsp;&nbsp;23:00 - 07:30</h2>
+            <div class="sleep-track"></div>
+            <div class="sleep-axis">23:00&nbsp;&nbsp;&nbsp;&nbsp;01:00&nbsp;&nbsp;&nbsp;&nbsp;03:00&nbsp;&nbsp;&nbsp;&nbsp;05:00&nbsp;&nbsp;&nbsp;&nbsp;07:30</div>
+            <h3>体动波动</h3>
+            <canvas id="motionTrend"></canvas>
+          </article>
+
+          <footer class="status-bar">
+            <div><span>告警</span><strong class="green">2 次</strong></div>
+            <div><span>体动 / 链路</span><strong class="blue">呼吸异常 1 次&nbsp;&nbsp;•&nbsp;&nbsp;体动异常 1 次</strong></div>
+            <div><span>有效帧</span><strong class="blue">98.6%</strong></div>
+            <div><span>解析错误</span><strong class="orange">↓3</strong></div>
+            <div><span>CRC错误</span><strong class="red">良好</strong></div>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen" id="bedside" aria-label="床旁影像">
+        <div class="content bedside-grid">
+          <article class="metric-card bed blue-card">
+            <div class="round-icon">▣</div>
+            <div class="metric-copy">
+              <h2>影像状态</h2>
+              <div class="metric-value bed-value"><strong id="imageStatusValue">观察中</strong></div>
+              <div class="metric-foot"><span id="imageStatusFoot">● 已连接</span></div>
+            </div>
+          </article>
+          <article class="metric-card heart">
+            <div class="round-icon">质</div>
+            <div class="metric-copy">
+              <h2>画面质量</h2>
+              <div class="metric-value bed-value"><strong id="bedsideStateValue">等待</strong></div>
+              <div class="metric-foot"><span id="bedsideStateFoot">● 等待数据</span></div>
+            </div>
+          </article>
+          <article class="metric-card event">
+            <div class="round-icon">!</div>
+            <div class="metric-copy">
+              <h2>安全提醒</h2>
+              <div class="metric-value bed-value"><strong id="safetyValue">等待</strong></div>
+              <div class="metric-foot"><span id="safetyFoot">● 等待数据</span></div>
+            </div>
+          </article>
+
+          <article class="image-card">
+            <div class="image-head">
+              <h2>当前床旁画面</h2>
+              <span>鲁班猫已连接，支持图片上报与视频流观察</span>
+            </div>
+            <div class="image-frame image-frame-reference"><img src="./bedside_default.jpg" alt="当前床旁画面" /></div>
+            <div class="image-actions">
+              <button type="button">▣ 拍摄一张</button>
+              <button type="button" class="primary">▶ 开始观察</button>
+              <button type="button">Ⅱ 暂停观察</button>
+              <button type="button">▤ 保存记录</button>
+            </div>
+          </article>
+
+          <aside class="care-column bedside-side">
+            <article class="care-card">
+              <h2>护理记录</h2>
+              <div class="care-row"><span>● 采集时间</span><strong id="careCaptureTime">--</strong></div>
+              <div class="care-row"><span>☑ 判断结果</span><strong class="green" id="careResult">等待数据</strong></div>
+              <div class="care-row"><span>↔ 雷达状态</span><strong class="green" id="careRadar">等待数据</strong></div>
+              <div class="care-row"><span>■ 护理备注</span><strong class="green" id="careNote">等待画面</strong></div>
+            </article>
+            <article class="care-card">
+              <div class="recent-head"><h2>近期记录</h2><button class="more-link" id="recentMore" type="button">查看更多 ›</button></div>
+              <div class="care-row recent-row"><span id="recentTime0">● --:--:--</span><strong id="recentText0">等待数据</strong><em id="recentBadge0">等待</em></div>
+              <div class="care-row recent-row"><span id="recentTime1">● --:--:--</span><strong id="recentText1">等待数据</strong><em id="recentBadge1">等待</em></div>
+              <div class="care-row recent-row"><span id="recentTime2">● --:--:--</span><strong id="recentText2">等待数据</strong><em id="recentBadge2">等待</em></div>
+            </article>
+          </aside>
+
+          <footer class="image-summary">
+            <span>✓</span>
+            <strong>影像画面清晰，雷达链路正常，生命体征平稳。</strong>
+          </footer>
+        </div>
+      </section>
+
+      <section class="screen" id="yolo" aria-label="YOLO检测">
+        <div class="content yolo-grid">
+          <article class="yolo-stage">
+            <div class="card-head">
+              <h2>上传图片检测</h2>
+              <span id="yoloPageStatus">等待图片</span>
+            </div>
+            <div class="yolo-preview" id="yoloPreview">
+              <img id="yoloPreviewImage" alt="待检测图片预览" />
+              <div class="yolo-empty" id="yoloEmpty">
+                <strong>选择一张床旁图片</strong>
+                <span>上传后进行目标识别</span>
+              </div>
+            </div>
+          </article>
+
+          <aside class="yolo-side">
+            <article class="yolo-panel">
+              <h2>检测参数</h2>
+              <label>置信度阈值<input id="yoloConf" type="number" min="0" max="1" step="0.05" value="0.25" /></label>
+              <label>IOU阈值<input id="yoloIou" type="number" min="0" max="1" step="0.05" value="0.70" /></label>
+              <label class="check-row"><input id="yoloShowLabels" type="checkbox" checked />显示标签</label>
+              <label class="check-row"><input id="yoloShowConfidence" type="checkbox" checked />显示置信度</label>
+            </article>
+
+            <article class="yolo-panel result-panel">
+              <h2>检测结果</h2>
+              <p><span>在床判断</span><strong id="yoloDetectBed">等待图片</strong></p>
+              <p><span>目标数量</span><strong id="yoloDetectCount">0</strong></p>
+              <p><span>最高置信度</span><strong id="yoloDetectConfidence">--</strong></p>
+              <p><span>耗时</span><strong id="yoloDetectTime">--</strong></p>
+            </article>
+
+            <article class="yolo-actions">
+              <input id="yoloFileInput" type="file" accept="image/*" hidden />
+              <button id="yoloOpenImage" class="primary" type="button">▧ 打开图片</button>
+              <button id="yoloRunDetect" type="button">◎ 开始检测</button>
+              <button id="yoloClear" type="button">× 清空</button>
+            </article>
+          </aside>
+
+          <article class="yolo-table-card">
+            <div class="recent-head"><h2>检测结果表</h2><button id="yoloZoom" class="more-link" type="button">放大查看 ›</button></div>
+            <table class="yolo-table">
+              <thead>
+                <tr><th>序号</th><th>文件名</th><th>类别</th><th>置信度</th><th>坐标位置</th></tr>
+              </thead>
+              <tbody id="yoloResultBody">
+                <tr><td colspan="5">暂无检测结果</td></tr>
+              </tbody>
+            </table>
+          </article>
+        </div>
+      </section>
+
+      <section class="screen" id="device" aria-label="设备调试">
+        <div class="content device-grid">
+          <article class="device-card green-card">
+            <div class="round-icon">⌁</div>
+            <div><h2>雷达链路</h2><strong>●&nbsp;&nbsp;正常</strong><span>串口：/dev/ttyS9</span><span>波特率：115200</span></div>
+          </article>
+          <article class="device-card blue-card">
+            <div class="round-icon">▣</div>
+            <div><h2>串口状态</h2><strong>●&nbsp;&nbsp;已打开</strong><span>权限：dialout</span><span>读取超时：0.2s</span></div>
+          </article>
+          <article class="device-card purple-card">
+            <div class="round-icon">↗</div>
+            <div><h2>数据解析</h2><strong>●&nbsp;&nbsp;正常</strong><span>协议：R60ABD1</span><span>校验：启用</span></div>
+          </article>
+          <article class="device-card orange-card">
+            <div class="round-icon">▤</div>
+            <div><h2>API服务</h2><strong>●&nbsp;&nbsp;正常</strong><span>端口：8000</span><span>接口：/radar</span></div>
+          </article>
+
+          <article class="serial-card">
+            <h2>串口解析字段总览</h2>
+            <div class="serial-grid">
+              <section>
+                <h3>人体</h3>
+                <p><span>存在</span><strong>有人</strong></p>
+                <p><span>运动</span><strong>活跃</strong></p>
+                <p><span>体动</span><strong>39/100</strong></p>
+                <p><span>距离</span><strong>37 cm</strong></p>
+                <p><span>方位</span><strong>X6 Y28 Z0</strong></p>
+                <h3>睡眠</h3>
+                <p><span>监测码</span><strong>1</strong></p>
+                <p><span>状态</span><strong>清醒</strong></p>
+                <p><span>评分</span><strong>86%</strong></p>
+                <p><span>总时长</span><strong>456 min</strong></p>
+                <p><span>翻身/暂停</span><strong>4 / 0</strong></p>
+              </section>
+              <section>
+                <h3>生命体征</h3>
+                <p><span>心率</span><strong>81 bpm</strong></p>
+                <p><span>呼吸</span><strong>17 rpm</strong></p>
+                <p><span>呼吸状态</span><strong>正常</strong></p>
+                <p><span>心率波形</span><strong>300 点</strong></p>
+                <p><span>呼吸波形</span><strong>300 点</strong></p>
+                <h3>系统</h3>
+                <p><span>有效帧</span><strong>28268</strong></p>
+                <p><span>解析/CRC</span><strong>0 / 0</strong></p>
+                <p><span>评级</span><strong>良好</strong></p>
+                <p><span>异常</span><strong>无异常</strong></p>
+                <p><span>更新</span><strong>1s</strong></p>
+              </section>
+            </div>
+          </article>
+
+          <aside class="debug-card">
+            <h2>最后一帧 HEX</h2>
+            <code>53 59 85 02 00 01 4E 82 54 43</code>
+            <h2>运行状态</h2>
+            <p>● 串口 /dev/ttyS9</p>
+            <p>● 波特率 115200</p>
+            <p>● FastAPI :8000</p>
+            <h2>外网访问</h2>
+            <p class="tunnel-line">
+              <a id="externalTunnelUrl" href="#" target="_blank" rel="noopener">正在获取外网地址...</a>
+            </p>
+            <button class="tunnel-copy" id="copyTunnelUrl" type="button">复制外网地址</button>
+            <p>● UI 1s 刷新</p>
+            <h2>板端参数</h2>
+            <div class="config-line">波形缓存&nbsp;&nbsp;&nbsp;&nbsp;300点</div>
+            <div class="config-line">采样周期&nbsp;&nbsp;&nbsp;&nbsp;200 ms</div>
+            <div class="config-line">启动脚本&nbsp;&nbsp;&nbsp;&nbsp;./run_board.sh</div>
+          </aside>
+
+          <footer class="status-bar">
+            <div><span>告警</span><strong class="green">98.6 fps</strong></div>
+            <div><span>体动 / 链路</span><strong class="blue">串口正常&nbsp;&nbsp;•&nbsp;&nbsp;API正常</strong></div>
+            <div><span>有效帧</span><strong class="blue">0</strong></div>
+            <div><span>解析错误</span><strong class="orange">0</strong></div>
+            <div><span>CRC错误</span><strong class="red">0</strong></div>
+          </footer>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div class="record-modal" id="recordModal" aria-hidden="true">
+    <div class="record-dialog" role="dialog" aria-modal="true" aria-labelledby="recordDialogTitle">
+      <div class="record-dialog-head">
+        <div>
+          <h2 id="recordDialogTitle">最近三十天护理记录</h2>
+          <span>按最新记录排序</span>
+        </div>
+        <button class="record-close" id="recordClose" type="button" aria-label="关闭">×</button>
+      </div>
+      <div class="record-list" id="recordList"></div>
+    </div>
+  </div>
+
+    <script src="./app.js?v=20260705-tunnel-url-1"></script>
+</body>
+</html>

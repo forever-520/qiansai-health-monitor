@@ -1,0 +1,438 @@
+<Window x:Class="HealthMonitorClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RK3588 健康监测客户端"
+        Width="1280"
+        Height="800"
+        MinWidth="1040"
+        MinHeight="680"
+        Background="#F5F7FA"
+        FontFamily="Microsoft YaHei UI">
+  <Window.Resources>
+    <SolidColorBrush x:Key="BlueBrush" Color="#005FBD" />
+    <SolidColorBrush x:Key="GreenBrush" Color="#008B1A" />
+    <SolidColorBrush x:Key="MagentaBrush" Color="#FF1493" />
+    <SolidColorBrush x:Key="AmberBrush" Color="#FF8A00" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#6F7782" />
+    <SolidColorBrush x:Key="LineBrush" Color="#D6D9DF" />
+    <SolidColorBrush x:Key="SoftBlueBrush" Color="#EEF2F6" />
+
+    <Style x:Key="PanelBorder" TargetType="Border">
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <Style x:Key="TabButton" TargetType="Button">
+      <Setter Property="MinWidth" Value="84" />
+      <Setter Property="Height" Value="42" />
+      <Setter Property="Padding" Value="16,0" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Cursor" Value="Hand" />
+    </Style>
+
+    <Style x:Key="StatText" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+      <Setter Property="FontWeight" Value="Bold" />
+      <Setter Property="FontSize" Value="16" />
+    </Style>
+  </Window.Resources>
+
+  <Grid Margin="24,18,24,20">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="14" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Grid Grid.Row="0">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="18" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <StackPanel Orientation="Horizontal">
+        <Border Width="44" Height="44" CornerRadius="8" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Background="#DFE4EA">
+          <TextBlock Text="RK" Foreground="{StaticResource BlueBrush}" FontSize="22" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel Margin="14,0,0,0">
+          <TextBlock Text="床旁非接触生命体征监测" Foreground="{StaticResource BlueBrush}" FontSize="30" FontWeight="Black" />
+          <TextBlock Text="RK3588 / R60ABD1 / 本地实时监测" Foreground="{StaticResource MutedBrush}" FontSize="15" Margin="0,5,0,0" />
+        </StackPanel>
+      </StackPanel>
+
+      <Border Grid.Column="1" Padding="5" CornerRadius="8" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Background="#DFE4EA">
+        <StackPanel Orientation="Horizontal">
+          <Button x:Name="RealtimeTab" Content="实时" Style="{StaticResource TabButton}" Click="RealtimeTab_Click" />
+          <Button x:Name="HistoryTab" Content="历史" Style="{StaticResource TabButton}" Click="HistoryTab_Click" />
+          <Button x:Name="DeviceTab" Content="设备" Style="{StaticResource TabButton}" Click="DeviceTab_Click" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Column="3" Height="46" Padding="16,0" CornerRadius="8" BorderBrush="#48005FBD" BorderThickness="1" Background="#14005FBD">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+          <Ellipse Width="10" Height="10" Fill="{StaticResource BlueBrush}" Margin="0,0,9,0" />
+          <TextBlock Text="雷达在线" Foreground="{StaticResource BlueBrush}" FontSize="16" FontWeight="Black" VerticalAlignment="Center" />
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <Grid x:Name="RealtimeScreen" Grid.Row="2">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="0.78*" MinWidth="260" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="1.6*" MinWidth="520" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="0.86*" MinWidth="260" />
+      </Grid.ColumnDefinitions>
+
+      <Grid Grid.Column="0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="156" />
+          <RowDefinition Height="14" />
+          <RowDefinition Height="156" />
+          <RowDefinition Height="14" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource PanelBorder}" BorderThickness="4,1,1,1" BorderBrush="{StaticResource GreenBrush}">
+          <Grid Margin="16">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+              <TextBlock Text="心率" Style="{StaticResource StatText}" />
+              <Border HorizontalAlignment="Right" Padding="9,2" CornerRadius="6" BorderBrush="#59008B1A" BorderThickness="1" Background="#14008B1A">
+                <TextBlock x:Name="HeartTag" Text="稳定" Foreground="{StaticResource GreenBrush}" FontSize="13" FontWeight="Black" />
+              </Border>
+            </Grid>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock x:Name="HeartValue" Text="72" FontSize="64" FontWeight="Black" Foreground="#111111" />
+              <TextBlock Text="bpm" FontSize="21" FontWeight="Black" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Bottom" Margin="10,0,0,12" />
+            </StackPanel>
+            <TextBlock Grid.Row="2" Text="阈值 50 - 100 bpm" Foreground="{StaticResource MutedBrush}" FontSize="15" />
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Style="{StaticResource PanelBorder}" BorderThickness="4,1,1,1" BorderBrush="{StaticResource MagentaBrush}">
+          <Grid Margin="16">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+              <TextBlock Text="呼吸" Style="{StaticResource StatText}" />
+              <Border HorizontalAlignment="Right" Padding="9,2" CornerRadius="6" BorderBrush="#59FF1493" BorderThickness="1" Background="#14FF1493">
+                <TextBlock x:Name="BreathTag" Text="正常" Foreground="{StaticResource MagentaBrush}" FontSize="13" FontWeight="Black" />
+              </Border>
+            </Grid>
+            <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock x:Name="BreathValue" Text="16" FontSize="64" FontWeight="Black" Foreground="#111111" />
+              <TextBlock Text="rpm" FontSize="21" FontWeight="Black" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Bottom" Margin="10,0,0,12" />
+            </StackPanel>
+            <TextBlock Grid.Row="2" Text="阈值 8 - 24 rpm" Foreground="{StaticResource MutedBrush}" FontSize="15" />
+          </Grid>
+        </Border>
+
+        <Border Grid.Row="4" Style="{StaticResource PanelBorder}" Padding="18">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="14" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="12" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="12" />
+              <RowDefinition Height="12" />
+              <RowDefinition Height="12" />
+              <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid>
+              <TextBlock Text="监测状态" Style="{StaticResource StatText}" FontSize="17" />
+              <TextBlock x:Name="ClockText" Text="--:--:--" HorizontalAlignment="Right" Foreground="#111111" FontSize="15" FontWeight="Bold" />
+            </Grid>
+            <Grid Grid.Row="2">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Border Width="30" Height="30" CornerRadius="8" Background="#14005FBD">
+                <TextBlock Text="床" Foreground="{StaticResource BlueBrush}" FontSize="17" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Grid.Column="1" Text="在床状态" Style="{StaticResource StatText}" VerticalAlignment="Center" Margin="12,0" />
+              <TextBlock Grid.Column="2" Text="有人 / 稳定" FontSize="16" FontWeight="Black" Foreground="#111111" VerticalAlignment="Center" />
+            </Grid>
+            <Grid Grid.Row="4">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Border Width="30" Height="30" CornerRadius="8" Background="#14005FBD">
+                <TextBlock Text="动" Foreground="{StaticResource BlueBrush}" FontSize="17" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Grid.Column="1" Text="体动强度" Style="{StaticResource StatText}" VerticalAlignment="Center" Margin="12,0" />
+              <TextBlock x:Name="MotionText" Grid.Column="2" Text="26 / 100" FontSize="16" FontWeight="Black" Foreground="#111111" VerticalAlignment="Center" />
+            </Grid>
+            <Border Grid.Row="6" Height="12" CornerRadius="8" Background="#F6F7F9" BorderBrush="#ECEFF3" BorderThickness="1">
+              <Grid>
+                <Rectangle x:Name="MotionBar" HorizontalAlignment="Left" Fill="#20C6AD" RadiusX="8" RadiusY="8" Width="96" />
+              </Grid>
+            </Border>
+            <Grid Grid.Row="8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Border Width="30" Height="30" CornerRadius="8" Background="#14005FBD">
+                <TextBlock Text="帧" Foreground="{StaticResource BlueBrush}" FontSize="17" FontWeight="Black" HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <TextBlock Grid.Column="1" Text="UI 刷新" Style="{StaticResource StatText}" VerticalAlignment="Center" Margin="12,0" />
+              <TextBlock Grid.Column="2" Text="50 ms" FontSize="16" FontWeight="Black" Foreground="#111111" VerticalAlignment="Center" />
+            </Grid>
+          </Grid>
+        </Border>
+      </Grid>
+
+      <Border Grid.Column="2" Style="{StaticResource PanelBorder}" Padding="16">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Grid>
+            <TextBlock Text="心跳波形" Style="{StaticResource StatText}" FontSize="17" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <TextBlock Text="512 点窗口" Style="{StaticResource StatText}" Margin="0,0,10,0" />
+              <TextBlock Text="30 Hz" Style="{StaticResource StatText}" Margin="0,0,10,0" />
+              <Border Padding="9,2" CornerRadius="6" BorderBrush="#59008B1A" BorderThickness="1" Background="#14008B1A">
+                <TextBlock Text="DP7" Foreground="{StaticResource GreenBrush}" FontSize="13" FontWeight="Black" />
+              </Border>
+            </StackPanel>
+          </Grid>
+          <Border Grid.Row="2" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8" Background="White">
+            <Canvas x:Name="HeartCanvas" ClipToBounds="True" />
+          </Border>
+          <Grid Grid.Row="4">
+            <TextBlock Text="呼吸波形" Style="{StaticResource StatText}" FontSize="17" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <TextBlock Text="512 点窗口" Style="{StaticResource StatText}" Margin="0,0,10,0" />
+              <TextBlock Text="30 Hz" Style="{StaticResource StatText}" Margin="0,0,10,0" />
+              <Border Padding="9,2" CornerRadius="6" BorderBrush="#59FF1493" BorderThickness="1" Background="#14FF1493">
+                <TextBlock Text="DP10" Foreground="{StaticResource MagentaBrush}" FontSize="13" FontWeight="Black" />
+              </Border>
+            </StackPanel>
+          </Grid>
+          <Border Grid.Row="6" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" CornerRadius="8" Background="White">
+            <Canvas x:Name="BreathCanvas" ClipToBounds="True" />
+          </Border>
+        </Grid>
+      </Border>
+
+      <Border Grid.Column="4" Style="{StaticResource PanelBorder}">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <Grid Height="58" Margin="18,0">
+              <TextBlock Text="告警与链路" Style="{StaticResource StatText}" FontSize="17" VerticalAlignment="Center" />
+              <Border HorizontalAlignment="Right" VerticalAlignment="Center" Padding="9,2" CornerRadius="6" BorderBrush="#59FF8A00" BorderThickness="1" Background="#1AFF8A00">
+                <TextBlock Text="关注 1 项" Foreground="{StaticResource AmberBrush}" FontSize="13" FontWeight="Black" />
+              </Border>
+            </Grid>
+            <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" />
+
+            <StackPanel Margin="12">
+              <Border CornerRadius="8" BorderBrush="#73FF8A00" BorderThickness="1" Background="#1AFF8A00" Padding="11" Margin="0,0,0,9">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Text="长时间低体动" FontSize="16" FontWeight="Black" />
+                    <TextBlock Text="22:46" HorizontalAlignment="Right" FontSize="16" FontWeight="Black" />
+                  </Grid>
+                  <TextBlock Text="体动强度连续低于阈值，等待二次确认" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,6,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="11" Margin="0,0,0,9">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Text="心率恢复正常" FontSize="16" FontWeight="Black" />
+                    <TextBlock Text="22:18" HorizontalAlignment="Right" FontSize="16" FontWeight="Black" />
+                  </Grid>
+                  <TextBlock Text="72 bpm，已回到配置范围内" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,6,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="11">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Text="串口链路稳定" FontSize="16" FontWeight="Black" />
+                    <TextBlock Text="21:30" HorizontalAlignment="Right" FontSize="16" FontWeight="Black" />
+                  </Grid>
+                  <TextBlock Text="/dev/ttyS4，115200 bps" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,6,0,0" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+
+            <Grid Height="58" Margin="18,0">
+              <TextBlock Text="运行计数" Style="{StaticResource StatText}" FontSize="17" VerticalAlignment="Center" />
+              <Border HorizontalAlignment="Right" VerticalAlignment="Center" Padding="9,2" CornerRadius="6" BorderBrush="#59008B1A" BorderThickness="1" Background="#14008B1A">
+                <TextBlock Text="RUNNING" Foreground="{StaticResource GreenBrush}" FontSize="13" FontWeight="Black" />
+              </Border>
+            </Grid>
+            <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" />
+            <StackPanel Margin="12">
+              <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,9">
+                <Grid><TextBlock Text="有效帧" Style="{StaticResource StatText}" /><TextBlock x:Name="FrameCountText" Text="184,260" HorizontalAlignment="Right" FontWeight="Black" FontSize="16" /></Grid>
+              </Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,9">
+                <Grid><TextBlock Text="解析错误" Style="{StaticResource StatText}" /><TextBlock Text="12" HorizontalAlignment="Right" FontWeight="Black" FontSize="16" /></Grid>
+              </Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,9">
+                <Grid><TextBlock Text="CRC 错误" Style="{StaticResource StatText}" /><TextBlock Text="3" HorizontalAlignment="Right" FontWeight="Black" FontSize="16" /></Grid>
+              </Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="12">
+                <Grid><TextBlock Text="数据库队列" Style="{StaticResource StatText}" /><TextBlock Text="0" HorizontalAlignment="Right" FontWeight="Black" FontSize="16" /></Grid>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <Grid x:Name="HistoryScreen" Grid.Row="2" Visibility="Collapsed">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.05*" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="1.4*" />
+      </Grid.ColumnDefinitions>
+      <Grid Grid.Column="0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="14" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border Grid.Row="0" Style="{StaticResource PanelBorder}" Padding="18">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="14" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid>
+              <TextBlock Text="昨夜摘要" Style="{StaticResource StatText}" FontSize="17" />
+              <TextBlock Text="2026-04-28 22:30 - 06:40" HorizontalAlignment="Right" FontWeight="Bold" />
+            </Grid>
+            <UniformGrid Grid.Row="2" Columns="2" Rows="2">
+              <Border Style="{StaticResource PanelBorder}" Padding="18" Margin="0,0,7,7"><StackPanel><TextBlock Text="平均心率" Style="{StaticResource StatText}" /><TextBlock Text="71" FontSize="44" FontWeight="Black" /><TextBlock Text="bpm" Style="{StaticResource StatText}" /></StackPanel></Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="18" Margin="7,0,0,7"><StackPanel><TextBlock Text="平均呼吸" Style="{StaticResource StatText}" /><TextBlock Text="16" FontSize="44" FontWeight="Black" /><TextBlock Text="rpm" Style="{StaticResource StatText}" /></StackPanel></Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="18" Margin="0,7,7,0"><StackPanel><TextBlock Text="有效监测" Style="{StaticResource StatText}" /><TextBlock Text="94%" FontSize="44" FontWeight="Black" /><TextBlock Text="有稳定人体信号" Style="{StaticResource StatText}" /></StackPanel></Border>
+              <Border Style="{StaticResource PanelBorder}" Padding="18" Margin="7,7,0,0"><StackPanel><TextBlock Text="告警事件" Style="{StaticResource StatText}" /><TextBlock Text="3" FontSize="44" FontWeight="Black" /><TextBlock Text="均已恢复" Style="{StaticResource StatText}" /></StackPanel></Border>
+            </UniformGrid>
+          </Grid>
+        </Border>
+        <Border Grid.Row="2" Style="{StaticResource PanelBorder}" Padding="18">
+          <StackPanel>
+            <Grid Margin="0,0,0,14">
+              <TextBlock Text="最近事件" Style="{StaticResource StatText}" FontSize="17" />
+              <TextBlock Text="仅提示" HorizontalAlignment="Right" Foreground="{StaticResource AmberBrush}" FontWeight="Black" />
+            </Grid>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1.4*" />
+                <ColumnDefinition Width="1*" />
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="32" />
+                <RowDefinition Height="38" />
+                <RowDefinition Height="38" />
+                <RowDefinition Height="38" />
+              </Grid.RowDefinitions>
+              <TextBlock Text="时间" Style="{StaticResource StatText}" />
+              <TextBlock Grid.Column="1" Text="类型" Style="{StaticResource StatText}" />
+              <TextBlock Grid.Column="2" Text="触发值" Style="{StaticResource StatText}" />
+              <TextBlock Grid.Row="1" Text="04:16" /><TextBlock Grid.Row="1" Grid.Column="1" Text="呼吸率偏低" /><TextBlock Grid.Row="1" Grid.Column="2" Text="7 rpm" />
+              <TextBlock Grid.Row="2" Text="02:04" /><TextBlock Grid.Row="2" Grid.Column="1" Text="长时间低体动" /><TextBlock Grid.Row="2" Grid.Column="2" Text="31 min" />
+              <TextBlock Grid.Row="3" Text="23:42" /><TextBlock Grid.Row="3" Grid.Column="1" Text="心率偏高" /><TextBlock Grid.Row="3" Grid.Column="2" Text="103 bpm" />
+            </Grid>
+          </StackPanel>
+        </Border>
+      </Grid>
+      <Border Grid.Column="2" Style="{StaticResource PanelBorder}" Padding="18">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="*" />
+          </Grid.RowDefinitions>
+          <Grid>
+            <TextBlock Text="最近 7 天趋势" Style="{StaticResource StatText}" FontSize="17" />
+            <TextBlock Text="分钟级统计" HorizontalAlignment="Right" Foreground="{StaticResource BlueBrush}" FontWeight="Black" />
+          </Grid>
+          <UniformGrid Grid.Row="2" Columns="7" VerticalAlignment="Stretch">
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="220" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/22" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="250" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/23" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="200" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/24" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="280" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/25" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="265" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/26" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="300" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/27" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+            <StackPanel VerticalAlignment="Bottom" Margin="6"><Rectangle Height="320" Fill="#B3005FBD" RadiusX="8" RadiusY="8" /><TextBlock Text="04/28" Style="{StaticResource StatText}" TextAlignment="Center" FontSize="13" Margin="0,10,0,0" /></StackPanel>
+          </UniformGrid>
+        </Grid>
+      </Border>
+    </Grid>
+
+    <Grid x:Name="DeviceScreen" Grid.Row="2" Visibility="Collapsed">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="1.05*" />
+        <ColumnDefinition Width="14" />
+        <ColumnDefinition Width="1.4*" />
+      </Grid.ColumnDefinitions>
+      <Border Grid.Column="0" Style="{StaticResource PanelBorder}" Padding="18">
+        <StackPanel>
+          <Grid Margin="0,0,0,14">
+            <TextBlock Text="设备链路" Style="{StaticResource StatText}" FontSize="17" />
+            <TextBlock Text="SYS_RUNNING" HorizontalAlignment="Right" Foreground="{StaticResource GreenBrush}" FontWeight="Black" />
+          </Grid>
+          <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,12"><Grid><TextBlock Text="串口设备" Style="{StaticResource StatText}" /><TextBlock Text="/dev/ttyS4" HorizontalAlignment="Right" FontWeight="Black" /></Grid></Border>
+          <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,12"><Grid><TextBlock Text="波特率" Style="{StaticResource StatText}" /><TextBlock Text="115200" HorizontalAlignment="Right" FontWeight="Black" /></Grid></Border>
+          <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,12"><Grid><TextBlock Text="离线超时" Style="{StaticResource StatText}" /><TextBlock Text="1500 ms" HorizontalAlignment="Right" FontWeight="Black" /></Grid></Border>
+          <Border Style="{StaticResource PanelBorder}" Padding="12" Margin="0,0,0,12"><Grid><TextBlock Text="原始抓包" Style="{StaticResource StatText}" /><TextBlock Text="开启" HorizontalAlignment="Right" FontWeight="Black" /></Grid></Border>
+          <Border Style="{StaticResource PanelBorder}" Padding="12"><Grid><TextBlock Text="SQLite" Style="{StaticResource StatText}" /><TextBlock Text="正常" HorizontalAlignment="Right" FontWeight="Black" /></Grid></Border>
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="2" Style="{StaticResource PanelBorder}" Padding="18">
+        <StackPanel>
+          <Grid Margin="0,0,0,14">
+            <TextBlock Text="阈值配置" Style="{StaticResource StatText}" FontSize="17" />
+            <TextBlock Text="只读展示" HorizontalAlignment="Right" Foreground="{StaticResource AmberBrush}" FontWeight="Black" />
+          </Grid>
+          <UniformGrid Columns="2">
+            <Border Style="{StaticResource PanelBorder}" Padding="16" Margin="0,0,6,6"><StackPanel><TextBlock Text="心率上限" Style="{StaticResource StatText}" /><TextBlock Text="100 bpm" FontSize="30" FontWeight="Black" /></StackPanel></Border>
+            <Border Style="{StaticResource PanelBorder}" Padding="16" Margin="6,0,0,6"><StackPanel><TextBlock Text="心率下限" Style="{StaticResource StatText}" /><TextBlock Text="50 bpm" FontSize="30" FontWeight="Black" /></StackPanel></Border>
+            <Border Style="{StaticResource PanelBorder}" Padding="16" Margin="0,6,6,6"><StackPanel><TextBlock Text="呼吸上限" Style="{StaticResource StatText}" /><TextBlock Text="24 rpm" FontSize="30" FontWeight="Black" /></StackPanel></Border>
+            <Border Style="{StaticResource PanelBorder}" Padding="16" Margin="6,6,0,6"><StackPanel><TextBlock Text="呼吸下限" Style="{StaticResource StatText}" /><TextBlock Text="8 rpm" FontSize="30" FontWeight="Black" /></StackPanel></Border>
+            <Border Style="{StaticResource PanelBorder}" Padding="16" Margin="0,6,6,0"><StackPanel><TextBlock Text="静止阈值" Style="{StaticResource StatText}" /><TextBlock Text="5.0" FontSize="30" FontWeight="Black" /></StackPanel></Border>
+            <Border Style="{StaticResource PanelBorder}" Padding="16" Margin="6,6,0,0"><StackPanel><TextBlock Text="静止时长" Style="{StaticResource StatText}" /><TextBlock Text="1800 s" FontSize="30" FontWeight="Black" /></StackPanel></Border>
+          </UniformGrid>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

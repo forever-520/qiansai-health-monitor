@@ -1,0 +1,10 @@
+[common]
+server_addr = YOUR_PUBLIC_SERVER_IP
+server_port = 7000
+token = CHANGE_THIS_TOKEN
+
+[rk_web_ui]
+type = http
+local_ip = 127.0.0.1
+local_port = 8081
+custom_domains = your-domain.example.com

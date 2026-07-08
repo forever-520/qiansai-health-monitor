@@ -1,0 +1,11 @@
+path: .
+
+train: images/train
+val: images/val
+test: images/val
+
+nc: 2
+
+names:
+  0: occupied_bed
+  1: empty_bed

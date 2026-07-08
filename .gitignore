@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Build outputs
+build/
+dist/
+*.o
+*.obj
+*.exe
+*.pdb
+
+# Runtime data and logs
+logs/
+data/
+*.log
+current_tunnel_url.txt
+care_records.json
+
+# Local secrets and board-specific config
+*.env
+!*.env.example
+rk_stack.env
+rk_web_ui.env
+.cloudflared/
+
+# Temporary files
+tmp/
+temp/
+*.zip
+*.rar
+*.7z
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+

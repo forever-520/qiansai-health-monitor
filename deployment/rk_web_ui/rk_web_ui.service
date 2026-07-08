@@ -1,0 +1,15 @@
+[Unit]
+Description=RK Web UI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/cat/rk_web_ui
+EnvironmentFile=/home/cat/rk_web_ui/rk_web_ui.env
+ExecStart=/usr/bin/python3 /home/cat/rk_web_ui/server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
