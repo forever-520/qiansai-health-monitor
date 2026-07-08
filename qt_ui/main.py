@@ -908,8 +908,8 @@ class HealthMonitorWindow(QMainWindow):
         self.capture_timer = QTimer(self)
         self.capture_timer.timeout.connect(self._capture_once)
         self.capture_inflight = False
-        self.capture_host = os.environ.get("LUBANCAT_CAPTURE_HOST", "127.0.0.1").strip() or "127.0.0.1"
-        self.capture_port = int(os.environ.get("LUBANCAT_CAPTURE_PORT", "8000"))
+        self.capture_host = os.environ.get("RK3576_SLAVE_CAPTURE_HOST", "127.0.0.1").strip() or "127.0.0.1"
+        self.capture_port = int(os.environ.get("RK3576_SLAVE_CAPTURE_PORT", "8000"))
         self.capture_output_path = ASSET_DIR / "bedside_live_capture.jpg"
         self.capture_save_dir = ASSET_DIR / "captures"
         self.capture_status_text = None

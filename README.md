@@ -18,7 +18,7 @@
 ├── health_monitor/              # C/C++ 嵌入式 Web 服务与前端 UI 原型
 ├── qt_ui/                       # RK 本地 Qt/PySide6 界面
 ├── deployment/
-│   ├── cat_lubancat/            # RK3576 从机雷达串口桥接与摄像头缓存服务
+│   ├── rk3576_slave/            # RK3576 从机雷达串口桥接与摄像头缓存服务
 │   └── rk_web_ui/               # 飞凌 RK3588 Web 服务、网关、部署脚本和外网访问模板
 ├── yolo_bed_state/              # YOLOv8 床位占用状态检测模型与资料
 ├── docs/
@@ -52,7 +52,7 @@ Qt UI 与 Web UI 共用飞凌 RK3588 网关数据
 ### 1. RK3576 从机端
 
 ```bash
-cd deployment/cat_lubancat
+cd deployment/rk3576_slave
 chmod +x start_radar_bridge.sh
 ./start_radar_bridge.sh
 ```
@@ -79,7 +79,7 @@ cp rk_stack.env.example rk_stack.env
 ```text
 WEB_USER=admin
 WEB_PASS=change-this-password
-LUBANCAT_HOST=auto
+RK3576_SLAVE_HOST=auto
 ```
 
 启动：

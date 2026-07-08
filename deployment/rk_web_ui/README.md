@@ -279,8 +279,8 @@ WEB_PASS=strong-password
 DATA_MODE=gateway
 DATA_HTTP_URL=http://127.0.0.1:8000
 DATA_WS_URL=ws://127.0.0.1:8001/ws
-LUBANCAT_HOST=rk3576-slave.local
-LUBANCAT_PORT=9001
+RK3576_SLAVE_HOST=rk3576-slave.local
+RK3576_SLAVE_PORT=9001
 GATEWAY_HTTP_PORT=8000
 GATEWAY_WS_PORT=8001
 ```
@@ -311,8 +311,8 @@ Start Qt UI against the same gateway:
 ```bash
 cd /home/cat/radar_qt
 RADAR_REMOTE_URL=http://127.0.0.1:8000/radar/raw \
-LUBANCAT_CAPTURE_HOST=127.0.0.1 \
-LUBANCAT_CAPTURE_PORT=8000 \
+RK3576_SLAVE_CAPTURE_HOST=127.0.0.1 \
+RK3576_SLAVE_CAPTURE_PORT=8000 \
 ./run_board.sh
 ```
 
@@ -323,12 +323,12 @@ LUBANCAT_CAPTURE_PORT=8000 \
 Prefer a stable hostname:
 
 ```bash
-LUBANCAT_HOST=rk3576-slave.local
+RK3576_SLAVE_HOST=rk3576-slave.local
 ```
 
 After changing WiFi, keep Qt and Web unchanged. Only the RK3588 gateway needs to resolve `rk3576-slave.local`.
 If hostname discovery is unavailable on the current router, temporarily set:
 
 ```bash
-LUBANCAT_HOST=192.168.x.x
+RK3576_SLAVE_HOST=192.168.x.x
 ```

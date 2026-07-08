@@ -151,7 +151,7 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         self._handle_login(error=True)
 
     def _handle_camera_capture(self) -> None:
-        if DATA_MODE not in {"gateway", "lubancat", "real"}:
+        if DATA_MODE not in {"gateway", "rk3576_slave", "real"}:
             self.send_error(503, "Camera capture requires DATA_MODE=gateway")
             return
         try:
@@ -182,7 +182,7 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def _handle_radar_raw(self) -> None:
-        if DATA_MODE not in {"gateway", "lubancat", "real"}:
+        if DATA_MODE not in {"gateway", "rk3576_slave", "real"}:
             self.send_error(503, "Radar data requires DATA_MODE=gateway")
             return
         try:
@@ -306,7 +306,7 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
     def _handle_yolo_detect(self) -> None:
         length = int(self.headers.get("Content-Length", "0") or "0")
         body = self.rfile.read(length)
-        if DATA_MODE in {"gateway", "lubancat", "real"}:
+        if DATA_MODE in {"gateway", "rk3576_slave", "real"}:
             try:
                 req = urllib.request.Request(f"{DATA_HTTP_URL}/yolo/detect", data=body, method="POST")
                 content_type = self.headers.get("Content-Type")
@@ -337,7 +337,7 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(data)
 
     def _handle_yolo_status(self) -> None:
-        if DATA_MODE in {"gateway", "lubancat", "real"}:
+        if DATA_MODE in {"gateway", "rk3576_slave", "real"}:
             try:
                 with urllib.request.urlopen(f"{DATA_HTTP_URL}/yolo/status", timeout=3) as response:
                     data = response.read()
@@ -618,7 +618,7 @@ class AuthHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Sec-WebSocket-Accept", accept)
         self.end_headers()
         self.close_connection = True
-        if DATA_MODE in {"gateway", "lubancat", "real"}:
+        if DATA_MODE in {"gateway", "rk3576_slave", "real"}:
             self._stream_gateway_vitals()
             return
         self._stream_mock_vitals()

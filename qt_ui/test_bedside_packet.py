@@ -11,7 +11,7 @@ class BedsidePacketTest(unittest.TestCase):
                 "breath": {"rate": 18},
                 "system": {"frame_count": 42},
             },
-            "source": "lubancat",
+            "source": "rk3576_slave",
         }
         jpeg = b"\xff\xd8fake-jpeg\xff\xd9"
 

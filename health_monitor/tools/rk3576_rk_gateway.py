@@ -10,30 +10,17 @@ RK 侧 Python 网关：
 
 import argparse
 import asyncio
-import cgi
-import concurrent.futures
-import ipaddress
-import io
 import json
 import math
 import os
 import socket
-import subprocess
-import sys
 import threading
 import time
 from dataclasses import dataclass, field
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 from typing import List
 from urllib.request import Request, urlopen
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
-from common.care_logic import evaluate_care
-from rk_web_ui.yolo_detector import detect_bed_state
 
 
 MAGIC = b"HM"
@@ -56,174 +43,6 @@ TEXT = {
     "bed": {0: "离床", 1: "入床", 2: "无"},
     "sleep": {0: "深睡", 1: "浅睡", 2: "清醒", 3: "无人"},
 }
-
-DISCOVERY_CACHE = Path(__file__).resolve().parent / "data" / "lubancat_last_ip.txt"
-DISCOVERY_HTTP_PORT = int(os.environ.get("LUBANCAT_HTTP_PORT", "8000"))
-DISCOVERY_PREFERRED_HOSTS = os.environ.get("LUBANCAT_PREFERRED_HOSTS", "")
-DISCOVERY_PREFERRED_TIMEOUT = float(os.environ.get("LUBANCAT_PREFERRED_TIMEOUT", "8.0"))
-DISCOVERY_SCAN_TIMEOUT = float(os.environ.get("LUBANCAT_SCAN_TIMEOUT", "0.45"))
-REMOTE_HTTP_TIMEOUT = float(os.environ.get("LUBANCAT_POLL_TIMEOUT", "8.0"))
-REMOTE_CAMERA_TIMEOUT = float(os.environ.get("LUBANCAT_CAMERA_TIMEOUT", "35.0"))
-CAMERA_JPEG_MAX_SIDE = int(os.environ.get("CAMERA_JPEG_MAX_SIDE", "960"))
-CAMERA_JPEG_QUALITY = int(os.environ.get("CAMERA_JPEG_QUALITY", "75"))
-
-
-def compress_camera_jpeg(jpeg_data):
-    if CAMERA_JPEG_MAX_SIDE <= 0 and CAMERA_JPEG_QUALITY >= 95:
-        return jpeg_data
-    try:
-        from PIL import Image
-    except Exception:
-        return jpeg_data
-    try:
-        image = Image.open(io.BytesIO(jpeg_data))
-        image.thumbnail((CAMERA_JPEG_MAX_SIDE, CAMERA_JPEG_MAX_SIDE))
-        if image.mode not in ("RGB", "L"):
-            image = image.convert("RGB")
-        output = io.BytesIO()
-        image.save(
-            output,
-            format="JPEG",
-            quality=max(30, min(95, CAMERA_JPEG_QUALITY)),
-            optimize=True,
-        )
-        compressed = output.getvalue()
-        # 压缩后反而更大时保留原图，避免弱网下增加负担。
-        return compressed if len(compressed) < len(jpeg_data) else jpeg_data
-    except Exception as exc:
-        print(f"CAMERA_COMPRESS_SKIP {exc}", flush=True)
-        return jpeg_data
-
-
-def is_auto_value(value):
-    return str(value or "").strip().lower() in {"auto", "discover", "scan"}
-
-
-def remote_urls_for_host(host, http_port=DISCOVERY_HTTP_PORT):
-    return (
-        f"http://{host}:{http_port}/radar/raw",
-        f"http://{host}:{http_port}/camera/capture",
-    )
-
-
-def _preferred_hosts(value=DISCOVERY_PREFERRED_HOSTS):
-    return [item.strip() for item in str(value or "").replace(";", ",").split(",") if item.strip()]
-
-
-def _local_ipv4_networks():
-    networks = []
-    try:
-        output = subprocess.check_output(
-            ["ip", "-o", "-4", "addr", "show", "scope", "global"],
-            text=True,
-            timeout=2,
-        )
-        for line in output.splitlines():
-            parts = line.split()
-            if "inet" in parts:
-                networks.append(parts[parts.index("inet") + 1])
-    except Exception:
-        try:
-            host = socket.gethostbyname(socket.gethostname())
-            if not host.startswith("127."):
-                networks.append(f"{host}/24")
-        except OSError:
-            pass
-    return networks
-
-
-def _candidate_hosts(networks):
-    candidates = []
-    seen = set()
-    for item in networks:
-        try:
-            interface = ipaddress.ip_interface(item)
-        except ValueError:
-            continue
-        own_ip = str(interface.ip)
-        network = interface.network
-        # 避免在大网段里扫太久；常见 WiFi/LAN 按 /24 扫描足够。
-        if network.prefixlen < 24:
-            network = ipaddress.ip_network(f"{interface.ip}/24", strict=False)
-        for host in network.hosts():
-            value = str(host)
-            if value == own_ip or value in seen:
-                continue
-            seen.add(value)
-            candidates.append(value)
-    return candidates
-
-
-def _probe_lubancat_http(host, port=DISCOVERY_HTTP_PORT, timeout=0.45):
-    try:
-        with urlopen(f"http://{host}:{port}/radar/raw", timeout=timeout) as response:
-            snap = json.loads(response.read(4096).decode("utf-8", "replace"))
-        return all(key in snap for key in ("human", "heart", "breath", "system"))
-    except Exception:
-        return False
-
-
-def _read_cached_host(cache_path=DISCOVERY_CACHE):
-    try:
-        value = Path(cache_path).read_text(encoding="utf-8").strip()
-    except OSError:
-        return ""
-    return value
-
-
-def _write_cached_host(host, cache_path=DISCOVERY_CACHE):
-    try:
-        path = Path(cache_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"{host}\n", encoding="utf-8")
-    except OSError:
-        pass
-
-
-def discover_lubancat_http_host(
-    configured_host="auto",
-    http_port=DISCOVERY_HTTP_PORT,
-    cache_path=DISCOVERY_CACHE,
-    networks=None,
-    probe=_probe_lubancat_http,
-    max_workers=32,
-    preferred_hosts=None,
-):
-    if not is_auto_value(configured_host):
-        return configured_host
-
-    for host in _preferred_hosts(DISCOVERY_PREFERRED_HOSTS if preferred_hosts is None else preferred_hosts):
-        if probe(host, http_port, DISCOVERY_PREFERRED_TIMEOUT):
-            _write_cached_host(host, cache_path)
-            print(f"LUBANCAT_DISCOVERY preferred {host}", flush=True)
-            return host
-
-    cached = _read_cached_host(cache_path)
-    if cached and probe(cached, http_port, DISCOVERY_PREFERRED_TIMEOUT):
-        print(f"LUBANCAT_DISCOVERY cached {cached}", flush=True)
-        return cached
-
-    candidates = _candidate_hosts(networks or _local_ipv4_networks())
-    if not candidates:
-        print("LUBANCAT_DISCOVERY no local IPv4 network found", flush=True)
-        return ""
-
-    print(f"LUBANCAT_DISCOVERY scanning {len(candidates)} hosts on port {http_port}", flush=True)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, max_workers)) as executor:
-        futures = {executor.submit(probe, candidate, http_port, DISCOVERY_SCAN_TIMEOUT): candidate for candidate in candidates}
-        for future in concurrent.futures.as_completed(futures):
-            candidate = futures[future]
-            try:
-                ok = bool(future.result())
-            except Exception:
-                ok = False
-            if ok:
-                _write_cached_host(candidate, cache_path)
-                print(f"LUBANCAT_DISCOVERY found {candidate}", flush=True)
-                return candidate
-
-    print("LUBANCAT_DISCOVERY not found", flush=True)
-    return ""
 
 
 @dataclass
@@ -251,7 +70,6 @@ class RadarSnapshot:
     last_image_jpeg: bytes = b""
     last_image_ts_ms: int = 0
     last_heartbeat_ack_ms: int = 0
-    last_frame_ts_ms: int = 0
 
 
 class SharedState:
@@ -285,9 +103,6 @@ class SharedState:
             self.snapshot.frame_count = int(system.get("frame_count", 0) or 0)
             self.snapshot.checksum_errors = int(system.get("checksum_error_count", 0) or 0)
             self.snapshot.parse_errors = int(system.get("parse_error_count", 0) or 0)
-            remote_ts = int(snap.get("timestamp_ms") or system.get("timestamp_ms") or 0)
-            remote_frame_ts = int(system.get("last_frame_ms") or system.get("last_frame_ts_ms") or 0)
-            self.snapshot.last_frame_ts_ms = remote_frame_ts or remote_ts or int(time.time() * 1000)
             self.snapshot.online = True
 
     def signed_16(self, high, low):
@@ -303,7 +118,6 @@ class SharedState:
         with self._lock:
             self.snapshot.online = True
             self.snapshot.frame_count += 1
-            self.snapshot.last_frame_ts_ms = int(time.time() * 1000)
 
             if len(frame) < 9 or frame[:2] != b"\x53\x59" or frame[-2:] != b"\x54\x43":
                 self.snapshot.parse_errors += 1
@@ -361,7 +175,6 @@ class SharedState:
             self.snapshot.wifi_rssi = payload[2]
 
     def update_image(self, jpeg_data):
-        jpeg_data = compress_camera_jpeg(jpeg_data)
         with self._lock:
             self.snapshot.last_image_jpeg = jpeg_data
             self.snapshot.last_image_ts_ms = int(time.time() * 1000)
@@ -384,33 +197,16 @@ class SharedState:
             display_exist = snap.human_exist if snap.human_exist in (0, 1) else 0
             presence = TEXT["exist"].get(display_exist, "无人")
             stability = "稳定" if snap.motion_state in (0, 1) else "活跃"
-            care = evaluate_care(
-                exist=display_exist,
-                bed=snap.bed,
-                sleep_state=snap.sleep,
-                motion_val=motion_val,
-                heart_rate=heart_bpm,
-                breath_rate=breath_rpm,
-                frame_count=snap.frame_count,
-                online=snap.online,
-            )
             return {
                 "type": "vital_signs",
                 "ts": int(time.time() * 1000),
-                "last_frame_ms": snap.last_frame_ts_ms,
                 "data": {
                     "hr": float(heart_bpm),
                     "br": float(breath_rpm),
                     "motion": float(motion_val),
                     "presence": presence,
                     "stability": stability,
-                    "bedState": TEXT["bed"].get(snap.bed, "未知"),
-                    "heartValid": heart_bpm > 0,
-                    "breathValid": breath_rpm > 0,
                     "online": snap.online,
-                    "ts": int(time.time() * 1000),
-                    "lastFrameMs": snap.last_frame_ts_ms,
-                    "care": care.to_dict(),
                 },
             }
 
@@ -459,7 +255,6 @@ class SharedState:
             return {
                 "type": "waveform",
                 "ts": int(time.time() * 1000),
-                "last_frame_ms": snap.last_frame_ts_ms,
                 "heart": heart,
                 "breath": breath,
             }
@@ -470,7 +265,6 @@ class SharedState:
             return {
                 "type": "stats",
                 "ts": int(time.time() * 1000),
-                "last_frame_ms": snap.last_frame_ts_ms,
                 "frame_count": snap.frame_count,
                 "parser_err": snap.parse_errors,
                 "crc_err": snap.checksum_errors,
@@ -480,16 +274,6 @@ class SharedState:
     def build_raw_snapshot(self):
         with self._lock:
             snap = self.snapshot
-            care = evaluate_care(
-                exist=snap.human_exist,
-                bed=snap.bed,
-                sleep_state=snap.sleep,
-                motion_val=snap.motion_val,
-                heart_rate=snap.heart_bpm,
-                breath_rate=snap.breath_rpm,
-                frame_count=snap.frame_count,
-                online=snap.online,
-            )
             return {
                 "human": {
                     "exist": snap.human_exist,
@@ -534,18 +318,15 @@ class SharedState:
                     "nobody_timer": 0,
                 },
                 "system": {
-                    "timestamp_ms": int(time.time() * 1000),
                     "frame_count": snap.frame_count,
                     "parse_error_count": snap.parse_errors,
                     "checksum_error_count": snap.checksum_errors,
                     "last_frame_hex": "",
-                    "last_frame_ms": snap.last_frame_ts_ms,
                     "online": snap.online,
                     "camera_ok": snap.camera_ok,
                     "wifi_rssi": snap.wifi_rssi,
                     "last_image_ts_ms": snap.last_image_ts_ms,
                 },
-                "care": care.to_dict(),
             }
 
     def build_alarms_message(self):
@@ -699,43 +480,23 @@ class ProtocolClient:
 
 
 class RemoteHttpClient:
-    def __init__(self, url, state, interval=1.0, capture_url="", auto_discover=False):
+    def __init__(self, url, state, interval=1.0, capture_url=""):
         self.url = url
         self.state = state
         self.interval = interval
         self.capture_url = capture_url
-        self.auto_discover = auto_discover
-        self.failures = 0
-        self.camera_lock = threading.Lock()
-
-    def _rediscover(self):
-        if not self.auto_discover:
-            return False
-        host = discover_lubancat_http_host("auto")
-        if not host:
-            return False
-        self.url, self.capture_url = remote_urls_for_host(host)
-        self.failures = 0
-        print(f"HTTP_DISCOVERY_ACTIVE {host}", flush=True)
-        return True
 
     def run_forever(self):
         while True:
             try:
-                if not self.url and not self._rediscover():
-                    raise RuntimeError("lubancat not discovered")
-                with urlopen(self.url, timeout=REMOTE_HTTP_TIMEOUT) as response:
+                with urlopen(self.url, timeout=3) as response:
                     snap = json.loads(response.read().decode("utf-8"))
                 self.state.update_from_remote_snapshot(snap)
-                self.failures = 0
                 print(f"HTTP_POLL_OK {self.url}", flush=True)
             except Exception as exc:
-                self.failures += 1
                 print(f"HTTP_POLL_ERROR {exc}", flush=True)
                 with self.state._lock:
                     self.state.snapshot.online = False
-                if self.failures >= 5:
-                    self._rediscover()
             time.sleep(self.interval)
 
     def request_image(self, trigger=0x01, count=1):
@@ -743,9 +504,8 @@ class RemoteHttpClient:
             raise RuntimeError("remote camera capture url is not configured")
         # HTTP 模式下由飞凌 RK3588 转发一次拍照请求到 RK3576 从机，拿到 JPEG 后缓存给 Web/Qt 使用。
         request = Request(self.capture_url, method="POST")
-        with self.camera_lock:
-            with urlopen(request, timeout=REMOTE_CAMERA_TIMEOUT) as response:
-                jpeg_data = response.read()
+        with urlopen(request, timeout=15) as response:
+            jpeg_data = response.read()
         if not jpeg_data.startswith(b"\xff\xd8"):
             raise RuntimeError("remote camera response is not jpeg")
         self.state.update_image(jpeg_data)
@@ -816,8 +576,6 @@ class QuietHandler(SimpleHTTPRequestHandler):
     state = None
     client = None
     capture_timeout = 8.0
-    capture_refreshing = False
-    capture_refresh_lock = threading.Lock()
 
     def log_message(self, fmt, *args):
         return
@@ -833,23 +591,10 @@ class QuietHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/healthz":
-            self._send_json({"ok": True, "service": "lubancat_rk_gateway", "websocket": "/ws"})
+            self._send_json({"ok": True, "service": "rk3576_rk_gateway", "websocket": "/ws"})
             return
         if self.path == "/radar/raw":
             self._send_json(self.state.build_raw_snapshot())
-            return
-        if self.path == "/yolo/status":
-            self._send_json(
-                {
-                    "ok": True,
-                    "enabled": False,
-                    "bedOccupied": None,
-                    "confidence": 0,
-                    "source": "reserved",
-                    "message": "YOLO接口待接入",
-                    "ts": int(time.time() * 1000),
-                }
-            )
             return
         if self.path == "/camera/latest.jpg":
             image, _ = self.state.get_latest_image()
@@ -861,9 +606,6 @@ class QuietHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
-        if self.path == "/yolo/detect":
-            self._handle_yolo_detect()
-            return
         if self.path != "/camera/capture":
             self.send_error(404, "File not found")
             return
@@ -874,12 +616,6 @@ class QuietHandler(SimpleHTTPRequestHandler):
                 self._send_image(image)
                 return
             self._send_json({"ok": False, "error": "camera_client_unavailable"}, status=503)
-            return
-        image, _ = self.state.get_latest_image()
-        if image:
-            # 有缓存时立即返回给 Web，同时后台刷新下一张，避免页面等 RK3576 slave 实时拍照导致 502。
-            self._refresh_camera_async()
-            self._send_image(image)
             return
         try:
             self.client.request_image(trigger=0x01, count=1)
@@ -896,63 +632,6 @@ class QuietHandler(SimpleHTTPRequestHandler):
             time.sleep(0.1)
         self._send_json({"ok": False, "error": "capture_timeout"}, status=504)
 
-    def _refresh_camera_async(self):
-        cls = type(self)
-        with cls.capture_refresh_lock:
-            if cls.capture_refreshing:
-                return
-            cls.capture_refreshing = True
-        threading.Thread(target=self._refresh_camera_worker, daemon=True).start()
-
-    def _refresh_camera_worker(self):
-        try:
-            self.client.request_image(trigger=0x01, count=1)
-        except Exception as exc:
-            print(f"CAMERA_REFRESH_ERROR {exc}", flush=True)
-        finally:
-            cls = type(self)
-            with cls.capture_refresh_lock:
-                cls.capture_refreshing = False
-
-    def _handle_yolo_detect(self):
-        length = int(self.headers.get("Content-Length", "0") or "0")
-        body = self.rfile.read(length)
-        image_bytes, file_name, conf, iou = self._parse_yolo_request(body)
-        result = detect_bed_state(image_bytes=image_bytes, conf=conf, iou=iou, file_name=file_name)
-        self._send_json(result, status=200 if result.get("ok") else 503)
-
-    def _parse_yolo_request(self, body):
-        content_type = self.headers.get("Content-Type", "")
-        conf = 0.25
-        iou = 0.70
-        file_name = "upload.jpg"
-        image_bytes = b""
-        if content_type.startswith("multipart/form-data"):
-            environ = {
-                "REQUEST_METHOD": "POST",
-                "CONTENT_TYPE": content_type,
-                "CONTENT_LENGTH": str(len(body)),
-            }
-            form = cgi.FieldStorage(fp=io.BytesIO(body), headers=self.headers, environ=environ, keep_blank_values=True)
-            image_field = form["image"] if "image" in form else None
-            if image_field is not None:
-                file_name = Path(getattr(image_field, "filename", "") or file_name).name
-                image_bytes = image_field.file.read()
-            if "conf" in form:
-                conf = self._to_float(form.getfirst("conf"), 0.25)
-            if "iou" in form:
-                iou = self._to_float(form.getfirst("iou"), 0.70)
-        else:
-            image_bytes = body
-        return image_bytes, file_name, max(0.01, min(1.0, conf)), max(0.01, min(1.0, iou))
-
-    @staticmethod
-    def _to_float(value, fallback):
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return fallback
-
     def _send_image(self, image):
         self.send_response(200)
         self.send_header("Content-Type", "image/jpeg")
@@ -966,7 +645,7 @@ def start_http_server(ui_dir, port, state, client):
     os.chdir(ui_dir)
     QuietHandler.state = state
     QuietHandler.client = client
-    server = ThreadingHTTPServer(("0.0.0.0", port), QuietHandler)
+    server = HTTPServer(("0.0.0.0", port), QuietHandler)
     print(f"HTTP Static Files → http://0.0.0.0:{port}", flush=True)
     server.serve_forever()
 
@@ -975,8 +654,8 @@ def main():
     parser = argparse.ArgumentParser(description="RK-side RK3576 slave TCP gateway for health_monitor UI")
     parser.add_argument("--remote-url", default=os.environ.get("REMOTE_RADAR_URL", ""), help="Optional RK3576 slave HTTP raw snapshot URL, e.g. http://<SLAVE_IP>:8000/radar/raw")
     parser.add_argument("--remote-camera-url", default=os.environ.get("REMOTE_CAMERA_CAPTURE_URL", ""), help="Optional RK3576 slave HTTP camera capture URL")
-    parser.add_argument("--lubancat-host", default=os.environ.get("LUBANCAT_HOST", "rk3576-slave.local"))
-    parser.add_argument("--lubancat-port", type=int, default=int(os.environ.get("LUBANCAT_PORT", "9001")))
+    parser.add_argument("--rk3576_slave-host", default=os.environ.get("RK3576_SLAVE_HOST", "rk3576-slave.local"))
+    parser.add_argument("--rk3576_slave-port", type=int, default=int(os.environ.get("RK3576_SLAVE_PORT", "9001")))
     parser.add_argument("--ws-port", type=int, default=int(os.environ.get("GATEWAY_WS_PORT", "8001")))
     parser.add_argument("--http-port", type=int, default=int(os.environ.get("GATEWAY_HTTP_PORT", "8000")))
     parser.add_argument("--rate", type=float, default=float(os.environ.get("GATEWAY_RATE", "20.0")), help="UI broadcast rate")
@@ -985,17 +664,11 @@ def main():
 
     state = SharedState()
     client = None
-    auto_http = is_auto_value(args.remote_url) or is_auto_value(args.lubancat_host)
-    if auto_http:
-        host = discover_lubancat_http_host("auto")
-        remote_url, remote_camera_url = remote_urls_for_host(host) if host else ("", "")
-        client = RemoteHttpClient(remote_url, state, interval=0.25, capture_url=remote_camera_url, auto_discover=True)
-        threading.Thread(target=client.run_forever, daemon=True).start()
-    elif args.remote_url:
+    if args.remote_url:
         client = RemoteHttpClient(args.remote_url, state, interval=0.25, capture_url=args.remote_camera_url)
         threading.Thread(target=client.run_forever, daemon=True).start()
     else:
-        client = ProtocolClient(args.lubancat_host, args.lubancat_port, state)
+        client = ProtocolClient(args.rk3576_slave_host, args.rk3576_slave_port, state)
         threading.Thread(target=client.run_forever, daemon=True).start()
     threading.Thread(target=start_http_server, args=(args.ui_dir, args.http_port, state, client), daemon=True).start()
 

@@ -27,7 +27,7 @@ def load_gateway_module():
     sys.modules["rk_web_ui"] = rk_web_ui
     sys.modules["rk_web_ui.yolo_detector"] = yolo_detector
 
-    spec = importlib.util.spec_from_file_location("gateway_under_test", ROOT / "lubancat_rk_gateway.py")
+    spec = importlib.util.spec_from_file_location("gateway_under_test", ROOT / "rk3576_rk_gateway.py")
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
@@ -38,9 +38,9 @@ class SlaveDiscoveryTests(unittest.TestCase):
     def test_auto_discovery_scans_subnet_and_caches_host(self):
         gateway = load_gateway_module()
         with tempfile.TemporaryDirectory() as tmp:
-            cache_path = Path(tmp) / "lubancat_last_ip.txt"
+            cache_path = Path(tmp) / "rk3576_slave_last_ip.txt"
 
-            host = gateway.discover_lubancat_http_host(
+            host = gateway.discover_rk3576_slave_http_host(
                 configured_host="auto",
                 networks=["192.168.8.10/29"],
                 cache_path=cache_path,
@@ -55,11 +55,11 @@ class SlaveDiscoveryTests(unittest.TestCase):
     def test_auto_discovery_tries_preferred_host_before_cache_and_scan(self):
         gateway = load_gateway_module()
         with tempfile.TemporaryDirectory() as tmp:
-            cache_path = Path(tmp) / "lubancat_last_ip.txt"
+            cache_path = Path(tmp) / "rk3576_slave_last_ip.txt"
             cache_path.write_text("192.168.8.13\n", encoding="utf-8")
             tried = []
 
-            host = gateway.discover_lubancat_http_host(
+            host = gateway.discover_rk3576_slave_http_host(
                 configured_host="auto",
                 networks=["192.168.8.10/29"],
                 cache_path=cache_path,
@@ -75,10 +75,10 @@ class SlaveDiscoveryTests(unittest.TestCase):
     def test_auto_discovery_tries_second_preferred_host_before_scan(self):
         gateway = load_gateway_module()
         with tempfile.TemporaryDirectory() as tmp:
-            cache_path = Path(tmp) / "lubancat_last_ip.txt"
+            cache_path = Path(tmp) / "rk3576_slave_last_ip.txt"
             tried = []
 
-            host = gateway.discover_lubancat_http_host(
+            host = gateway.discover_rk3576_slave_http_host(
                 configured_host="auto",
                 networks=["192.168.8.10/29"],
                 cache_path=cache_path,

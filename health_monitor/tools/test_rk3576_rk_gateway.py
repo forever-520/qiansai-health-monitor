@@ -1,6 +1,6 @@
 import unittest
 
-from health_monitor.tools import lubancat_rk_gateway as gateway
+from health_monitor.tools import rk3576_rk_gateway as gateway
 
 
 def radar_frame(ctrl, cmd, payload):

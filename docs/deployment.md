@@ -3,7 +3,7 @@
 ## RK3576 从机
 
 ```bash
-cd deployment/cat_lubancat
+cd deployment/rk3576_slave
 chmod +x start_radar_bridge.sh
 ./start_radar_bridge.sh
 ```
@@ -31,7 +31,7 @@ cp rk_stack.env.example rk_stack.env
 ```text
 WEB_USER=admin
 WEB_PASS=your-password
-LUBANCAT_HOST=auto
+RK3576_SLAVE_HOST=auto
 ```
 
 启动：
