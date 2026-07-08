@@ -33,6 +33,8 @@
 
 ![床旁非接触生命体征监测系统架构图](docs/images/system_architecture.png)
 
+设计文档见 [docs/28648.pdf](docs/28648.pdf)。
+
 核心链路：
 
 ```text
