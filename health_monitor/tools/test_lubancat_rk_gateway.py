@@ -9,7 +9,7 @@ def radar_frame(ctrl, cmd, payload):
     return head + bytes([checksum, 0x54, 0x43])
 
 
-class LubanCatRkGatewayTests(unittest.TestCase):
+class SlaveRkGatewayTests(unittest.TestCase):
     def test_update_from_radar_frame_updates_metrics(self):
         state = gateway.SharedState()
         state.update_from_radar_frame(radar_frame(0x85, 0x02, [78]))

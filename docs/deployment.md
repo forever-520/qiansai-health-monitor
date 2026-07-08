@@ -1,6 +1,6 @@
 # 部署说明
 
-## LubanCat
+## RK3576 从机
 
 ```bash
 cd deployment/cat_lubancat
@@ -19,7 +19,7 @@ chmod +x start_radar_bridge.sh
 --camera-cache-interval 8
 ```
 
-## RK Web
+## 飞凌 RK3588 Web
 
 ```bash
 cd deployment/rk_web_ui
@@ -66,4 +66,3 @@ chmod +x install_systemd.sh
 ```bash
 systemctl --user status qiansai-web.service
 ```
-

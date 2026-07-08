@@ -1,13 +1,13 @@
 # Qiansai Health Monitor
 
-基于 RK 与 LubanCat 的非接触式健康监测系统。项目围绕毫米波雷达生命体征采集、床旁图像辅助判断、Qt 本地显示、Web 远程看护界面和 YOLOv8 床位状态识别展开，适用于嵌入式健康监测、养老看护、病床状态观察等场景的原型验证。
+基于飞凌 RK3588 与 RK3576 从机的非接触式健康监测系统。项目围绕毫米波雷达生命体征采集、床旁图像辅助判断、Qt 本地显示、Web 远程看护界面和 YOLOv8 床位状态识别展开，适用于嵌入式健康监测、养老看护、病床状态观察等场景的原型验证。
 
 ## 项目特点
 
 - **非接触式生命体征监测**：通过 R60ABD1 毫米波雷达解析人体存在、心率、呼吸、体动、睡眠/在床状态等信息。
 - **双端 UI 展示**：提供 RK 本地 Qt 界面与 Web 端仪表盘，支持实时数值、波形、床旁图像和设备调试信息展示。
-- **LubanCat + RK 双板协同**：LubanCat 负责雷达/摄像头采集，RK 负责网关聚合、本地 UI、Web 服务和外网访问。
-- **摄像头缓存机制**：LubanCat 可定时缓存最新床旁图像，RK/Web 请求时优先读取缓存，降低实时拍照导致的等待和 502 错误。
+- **RK3576 从机 + 飞凌 RK3588 双板协同**：RK3576 从机负责雷达/摄像头采集，飞凌 RK3588 负责网关聚合、本地 UI、Web 服务和外网访问。
+- **摄像头缓存机制**：RK3576 从机可定时缓存最新床旁图像，飞凌 RK3588/Web 请求时优先读取缓存，降低实时拍照导致的等待和 502 错误。
 - **YOLOv8 床位状态检测**：包含 `occupied_bed` 与 `empty_bed` 两类识别模型、训练配置、指标图和样例数据。
 - **局域网与外网访问**：Web 端可通过局域网 IP 访问，也可配合 cloudflared/frp 暴露公网访问入口。
 
@@ -18,8 +18,8 @@
 ├── health_monitor/              # C/C++ 嵌入式 Web 服务与前端 UI 原型
 ├── qt_ui/                       # RK 本地 Qt/PySide6 界面
 ├── deployment/
-│   ├── cat_lubancat/            # LubanCat 雷达串口桥接与摄像头缓存服务
-│   └── rk_web_ui/               # RK Web 服务、网关、部署脚本和外网访问模板
+│   ├── cat_lubancat/            # RK3576 从机雷达串口桥接与摄像头缓存服务
+│   └── rk_web_ui/               # 飞凌 RK3588 Web 服务、网关、部署脚本和外网访问模板
 ├── yolo_bed_state/              # YOLOv8 床位占用状态检测模型与资料
 ├── docs/
 │   ├── architecture.md          # 系统框图和数据流说明
@@ -31,26 +31,16 @@
 
 ## 系统架构
 
-```mermaid
-flowchart LR
-  Radar["R60ABD1 毫米波雷达"] --> Cat["LubanCat\n串口解析 + 摄像头缓存"]
-  Camera["床旁摄像头"] --> Cat
-  Cat -- "HTTP /radar/raw\n/camera/capture" --> RKGW["RK Gateway\n:8000 / :8001"]
-  RKGW --> Qt["Qt 本地 UI"]
-  RKGW --> WebServer["RK Web Server\n:8081"]
-  WebServer --> WebUI["浏览器 Web Dashboard"]
-  WebServer --> Tunnel["cloudflared / frp\n可选外网访问"]
-  YOLO["YOLOv8 床位状态检测"] --> WebServer
-```
+![床旁非接触生命体征监测系统架构图](docs/images/system_architecture.png)
 
 核心链路：
 
 ```text
-LubanCat 采集雷达和摄像头
+RK3576 从机采集雷达和摄像头
         ↓
-RK 网关统一读取数据和图像
+飞凌 RK3588 网关统一读取数据和图像
         ↓
-Qt UI 与 Web UI 共用 RK 网关数据
+Qt UI 与 Web UI 共用飞凌 RK3588 网关数据
         ↓
 浏览器通过局域网或外网访问 Web 端
 ```
@@ -59,7 +49,7 @@ Qt UI 与 Web UI 共用 RK 网关数据
 
 ## 快速开始
 
-### 1. LubanCat 端
+### 1. RK3576 从机端
 
 ```bash
 cd deployment/cat_lubancat
@@ -70,14 +60,14 @@ chmod +x start_radar_bridge.sh
 服务启动后默认提供：
 
 ```text
-http://<LUBANCAT_IP>:8000/radar/raw
-http://<LUBANCAT_IP>:8000/camera/latest.jpg
-http://<LUBANCAT_IP>:8000/camera/capture
+http://<SLAVE_IP>:8000/radar/raw
+http://<SLAVE_IP>:8000/camera/latest.jpg
+http://<SLAVE_IP>:8000/camera/capture
 ```
 
-其中 `/camera/capture` 会优先返回 LubanCat 本机缓存的最新 JPEG 图片。
+其中 `/camera/capture` 会优先返回 RK3576 从机本机缓存的最新 JPEG 图片。
 
-### 2. RK Web 端
+### 2. 飞凌 RK3588 Web 端
 
 ```bash
 cd deployment/rk_web_ui
@@ -174,4 +164,3 @@ deployment/rk_web_ui/rk_web_ui.env.example
 ## License
 
 本项目以 MIT License 开源，详见 [LICENSE](LICENSE)。
-

@@ -63,8 +63,8 @@ class WavePanel(Frame):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="Display LubanCat radar waveforms on PC.")
-    parser.add_argument("--url", default="http://192.168.31.73:8000/radar/raw")
+    parser = argparse.ArgumentParser(description="Display RK3576 slave radar waveforms on PC.")
+    parser.add_argument("--url", default="http://<SLAVE_IP>:8000/radar/raw")
     parser.add_argument("--interval", type=float, default=1.0)
     return parser
 

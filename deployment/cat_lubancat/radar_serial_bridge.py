@@ -134,7 +134,7 @@ class CameraCache:
             return self.jpeg_data, self.ts_ms, self.last_error
 
     def capture_once(self):
-        # 摄像头采集和 JPEG 编码只允许一个线程做，避免连续请求把 LubanCat 压住。
+        # 摄像头采集和 JPEG 编码只允许一个线程做，避免连续请求把 RK3576 slave 压住。
         with self._capture_lock:
             jpeg_data = capture_jpeg_bytes(
                 device=self.device,
@@ -404,7 +404,7 @@ def make_handler(state, camera_cache):
                 return
             jpeg_data, _, _ = camera_cache.latest()
             if jpeg_data:
-                # RK 请求时直接返回 LubanCat 最近缓存图，避免每次都等待实时拍照。
+                # RK 请求时直接返回 RK3576 slave 最近缓存图，避免每次都等待实时拍照。
                 self._send_jpeg(jpeg_data, cached=True)
                 return
             try:

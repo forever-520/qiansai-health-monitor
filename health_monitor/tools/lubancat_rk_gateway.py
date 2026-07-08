@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 RK 侧 Python 网关：
-1) 连接鲁班猫 TCP 协议服务（9001）
+1) 连接 RK3576 从机 TCP 协议服务（9001）
 2) 收原始雷达帧、心跳、状态、图像
 3) 解析雷达帧为实时状态
 4) 通过 WebSocket 推给 health_monitor 前端 UI
@@ -502,7 +502,7 @@ class RemoteHttpClient:
     def request_image(self, trigger=0x01, count=1):
         if not self.capture_url:
             raise RuntimeError("remote camera capture url is not configured")
-        # HTTP 模式下由 RK 转发一次拍照请求到鲁班猫，拿到 JPEG 后缓存给 Web/Qt 使用。
+        # HTTP 模式下由飞凌 RK3588 转发一次拍照请求到 RK3576 从机，拿到 JPEG 后缓存给 Web/Qt 使用。
         request = Request(self.capture_url, method="POST")
         with urlopen(request, timeout=15) as response:
             jpeg_data = response.read()
@@ -651,10 +651,10 @@ def start_http_server(ui_dir, port, state, client):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="RK-side LubanCat TCP gateway for health_monitor UI")
-    parser.add_argument("--remote-url", default=os.environ.get("REMOTE_RADAR_URL", ""), help="Optional LubanCat HTTP raw snapshot URL, e.g. http://10.216.239.84:8000/radar/raw")
-    parser.add_argument("--remote-camera-url", default=os.environ.get("REMOTE_CAMERA_CAPTURE_URL", ""), help="Optional LubanCat HTTP camera capture URL")
-    parser.add_argument("--lubancat-host", default=os.environ.get("LUBANCAT_HOST", "lubancat.local"))
+    parser = argparse.ArgumentParser(description="RK-side RK3576 slave TCP gateway for health_monitor UI")
+    parser.add_argument("--remote-url", default=os.environ.get("REMOTE_RADAR_URL", ""), help="Optional RK3576 slave HTTP raw snapshot URL, e.g. http://<SLAVE_IP>:8000/radar/raw")
+    parser.add_argument("--remote-camera-url", default=os.environ.get("REMOTE_CAMERA_CAPTURE_URL", ""), help="Optional RK3576 slave HTTP camera capture URL")
+    parser.add_argument("--lubancat-host", default=os.environ.get("LUBANCAT_HOST", "rk3576-slave.local"))
     parser.add_argument("--lubancat-port", type=int, default=int(os.environ.get("LUBANCAT_PORT", "9001")))
     parser.add_argument("--ws-port", type=int, default=int(os.environ.get("GATEWAY_WS_PORT", "8001")))
     parser.add_argument("--http-port", type=int, default=int(os.environ.get("GATEWAY_HTTP_PORT", "8000")))

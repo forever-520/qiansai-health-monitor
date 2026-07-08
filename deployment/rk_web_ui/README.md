@@ -248,13 +248,13 @@ When real radar data is ready, keep the same JSON message format:
 
 ## RK Shared Data Stack
 
-Use this mode when Qt UI and Web UI must share the same LubanCat data on the RK board.
+Use this mode when Qt UI and Web UI must share the same RK3576 slave data on the Forlinx RK3588 board.
 
 ```text
-LubanCat -> RK gateway :8000/:8001 -> Qt UI + Web UI
+RK3576 slave -> RK3588 gateway :8000/:8001 -> Qt UI + Web UI
 ```
 
-The gateway connects to LubanCat once. Qt reads `http://127.0.0.1:8000/radar/raw`.
+The gateway connects to the RK3576 slave once. Qt reads `http://127.0.0.1:8000/radar/raw`.
 Web reads the same gateway through the Web server `/ws` proxy and uses `/camera/capture` for camera capture.
 
 Install the WebSocket dependency on RK once:
@@ -279,7 +279,7 @@ WEB_PASS=strong-password
 DATA_MODE=gateway
 DATA_HTTP_URL=http://127.0.0.1:8000
 DATA_WS_URL=ws://127.0.0.1:8001/ws
-LUBANCAT_HOST=lubancat.local
+LUBANCAT_HOST=rk3576-slave.local
 LUBANCAT_PORT=9001
 GATEWAY_HTTP_PORT=8000
 GATEWAY_WS_PORT=8001
@@ -318,15 +318,15 @@ LUBANCAT_CAPTURE_PORT=8000 \
 
 `run_board.sh` now uses these same default values, so the explicit environment variables are only needed when overriding.
 
-### Avoid Fixed LubanCat IP
+### Avoid Fixed RK3576 Slave IP
 
 Prefer a stable hostname:
 
 ```bash
-LUBANCAT_HOST=lubancat.local
+LUBANCAT_HOST=rk3576-slave.local
 ```
 
-After changing WiFi, keep Qt and Web unchanged. Only the RK gateway needs to resolve `lubancat.local`.
+After changing WiFi, keep Qt and Web unchanged. Only the RK3588 gateway needs to resolve `rk3576-slave.local`.
 If hostname discovery is unavailable on the current router, temporarily set:
 
 ```bash

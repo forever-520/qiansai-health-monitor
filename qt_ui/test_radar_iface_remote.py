@@ -17,10 +17,10 @@ class RadarIfaceRemoteTests(unittest.TestCase):
         return response
 
     def test_remote_mode_flag_reads_from_environment(self):
-        with mock.patch.dict("os.environ", {"RADAR_REMOTE_URL": "http://10.216.239.84:8000/radar/raw"}, clear=False):
+        with mock.patch.dict("os.environ", {"RADAR_REMOTE_URL": "http://<SLAVE_IP>:8000/radar/raw"}, clear=False):
             self.assertEqual(
                 radar_iface._remote_url_from_env(),
-                "http://10.216.239.84:8000/radar/raw",
+                "http://<SLAVE_IP>:8000/radar/raw",
             )
 
     def test_snapshot_from_remote_maps_core_fields_and_waves(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Small offline tests for LubanCat IP discovery helpers."""
+"""Small offline tests for RK3576 slave IP discovery helpers."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def load_gateway_module():
     return module
 
 
-class LubanCatDiscoveryTests(unittest.TestCase):
+class SlaveDiscoveryTests(unittest.TestCase):
     def test_auto_discovery_scans_subnet_and_caches_host(self):
         gateway = load_gateway_module()
         with tempfile.TemporaryDirectory() as tmp:

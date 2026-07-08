@@ -27,8 +27,8 @@ def format_display(data):
 
 
 def build_parser():
-    parser = argparse.ArgumentParser(description="Display LubanCat radar JSON data on PC.")
-    parser.add_argument("--url", default="http://192.168.31.73:8000/radar")
+    parser = argparse.ArgumentParser(description="Display RK3576 slave radar JSON data on PC.")
+    parser.add_argument("--url", default="http://<SLAVE_IP>:8000/radar")
     parser.add_argument("--interval", type=float, default=1.0)
     parser.add_argument("--once", action="store_true")
     return parser

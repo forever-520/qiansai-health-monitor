@@ -10,7 +10,7 @@ from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description="Start RK gateway and health_monitor UI")
-    parser.add_argument("--lubancat-host", default=os.environ.get("LUBANCAT_HOST", "lubancat.local"))
+    parser.add_argument("--lubancat-host", default=os.environ.get("LUBANCAT_HOST", "rk3576-slave.local"))
     parser.add_argument("--lubancat-port", type=int, default=int(os.environ.get("LUBANCAT_PORT", "9001")))
     parser.add_argument("--ws-port", type=int, default=int(os.environ.get("GATEWAY_WS_PORT", "8001")))
     parser.add_argument("--http-port", type=int, default=int(os.environ.get("GATEWAY_HTTP_PORT", "8000")))

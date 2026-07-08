@@ -1,8 +1,8 @@
-# 鲁班猫（LubanCat）端 - 完整代码清单
+# RK3576 从机端 - 完整代码清单
 
 **用户名：** `cat`  
-**主机 IP（热点）：** `10.216.239.84`  
-**主机 IP（局域网）：** `192.168.31.73`
+**从机 IP（热点）：** `<SLAVE_HOTSPOT_IP>`  
+**从机 IP（局域网）：** `<SLAVE_LAN_IP>`
 
 ---
 
@@ -125,7 +125,7 @@ def capture_frame():
 **示例响应：**
 ```bash
 # 雷达数据
-curl http://10.216.239.84:8000/radar/raw
+curl http://<SLAVE_IP>:8000/radar/raw
 {
   "human": {"exist": 1, "motion_state": 1, "motion_val": 12, ...},
   "heart": {"rate": 78, "wave": [...]},
@@ -135,7 +135,7 @@ curl http://10.216.239.84:8000/radar/raw
 }
 
 # 图像抓拍
-curl -X POST http://10.216.239.84:8000/camera/capture -o frame.jpg
+curl -X POST http://<SLAVE_IP>:8000/camera/capture -o frame.jpg
 ```
 
 ---
@@ -177,8 +177,8 @@ groups | grep dialout
 
 ```bash
 # 1. 上传代码
-scp radar_serial_bridge.py start_radar_bridge.sh cat@10.216.239.84:/home/cat/
-ssh cat@10.216.239.84
+scp radar_serial_bridge.py start_radar_bridge.sh cat@<SLAVE_IP>:/home/cat/
+ssh cat@<SLAVE_IP>
 chmod +x /home/cat/start_radar_bridge.sh
 
 # 2. 创建系统服务
@@ -343,7 +343,7 @@ sudo journalctl -u radar_bridge.service -f
 ### pc_radar_viewer.py（文本查看器）
 ```bash
 # 实时显示雷达数据
-python3 pc_radar_viewer.py http://10.216.239.84:8000/radar/raw
+python3 pc_radar_viewer.py http://<SLAVE_IP>:8000/radar/raw
 
 # 输出示例
 存在: 有人  体动: 静止(12)  距离: 35cm
@@ -355,7 +355,7 @@ python3 pc_radar_viewer.py http://10.216.239.84:8000/radar/raw
 ### pc_radar_wave_viewer.py（波形查看器）
 ```bash
 # matplotlib 实时波形
-python3 pc_radar_wave_viewer.py http://10.216.239.84:8000/radar/raw
+python3 pc_radar_wave_viewer.py http://<SLAVE_IP>:8000/radar/raw
 
 # 需要安装
 pip3 install matplotlib requests
